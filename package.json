@@ -1,0 +1,15 @@
+{
+  "name": "castle-gateway-paytm",
+  "version": "1.0.0",
+  "description": "PayTM UPI payment gateway — Railway deployment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
