@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Castle Pay</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f1f5f9;--white:#fff;--dark:#0f172a;--dark2:#1e293b;
+  --muted:#64748b;--line:#e2e8f0;--faint:#f8fafc;
+  --primary:#6366f1;--primary-l:#eff6ff;--primary-b:#bfdbfe;
+  --green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;
+  --red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;
+  --gold:#d97706;--gold-l:#fffbeb;--gold-b:#fde68a;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--dark);min-height:100dvh;font-size:14px}
+.topbar{background:var(--white);border-bottom:1px solid var(--line);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.logo{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.logo-badge{background:var(--primary);color:#fff;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--green);background:var(--green-l);border:1px solid var(--green-b);padding:3px 9px;border-radius:20px}
+.live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.8s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{background:var(--white);border-bottom:1px solid var(--line);display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;white-space:nowrap;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.screen{display:none;padding:18px;max-width:480px;margin:0 auto;animation:up .2s ease}
+.screen.active{display:block}
+@keyframes up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.clabel{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--dark2);margin-bottom:5px}
+.field input,.field select{width:100%;padding:10px 12px;font-size:14px;font-family:'Inter',sans-serif;border:1.5px solid var(--line);border-radius:var(--rs);color:var(--dark);background:var(--white);transition:border-color .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.field select{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2364748b' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.amt-wrap{position:relative}
+.amt-pre{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--muted);font-weight:500;pointer-events:none}
+.amt-wrap input{padding-left:24px;font-size:20px;font-weight:700}
+.btn-primary{width:100%;padding:13px;border-radius:var(--rs);background:var(--primary);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;box-shadow:0 4px 12px rgba(99,102,241,.28)}
+.btn-primary:hover{background:#4f46e5}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{background:#a5b4fc;box-shadow:none;cursor:not-allowed}
+.btn-outline{width:100%;padding:11px;border-radius:var(--rs);background:none;border:1.5px solid var(--line);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px;transition:all .15s}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.url-card{background:var(--primary-l);border:1.5px solid var(--primary-b);border-radius:var(--r);padding:13px;margin-bottom:12px}
+.url-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.url-txt{flex:1;font-family:'DM Mono',monospace;font-size:11px;color:var(--primary);word-break:break-all;line-height:1.5;cursor:pointer}
+.url-txt:hover{text-decoration:underline}
+.copy-btn{flex-shrink:0;padding:5px 11px;font-size:11px;font-weight:600;background:var(--primary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif}
+.copy-btn.ok{background:var(--green)}
+/* payment card */
+.pay-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.07);margin-bottom:12px}
+.pay-head{background:linear-gradient(135deg,#6366f1,#4f46e5);padding:22px 20px 18px;text-align:center;color:#fff}
+.pay-verified{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;margin-bottom:12px}
+.pay-mname{font-size:12px;opacity:.8;margin-bottom:8px;font-weight:500}
+.pay-albl{font-size:10px;opacity:.65;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.pay-amt{font-size:46px;font-weight:700;line-height:1}
+.pay-amt sup{font-size:22px;font-weight:400;opacity:.65;vertical-align:super}
+.timer-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;margin-top:10px}
+.pay-body{padding:18px}
+.qr-wrap{background:var(--white);border:2px solid var(--line);border-radius:12px;padding:10px;width:190px;height:190px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.08);transition:transform .15s}
+.qr-wrap:active{transform:scale(.97)}
+.qr-wrap img{width:100%;height:100%;border-radius:6px;display:block}
+.qr-hint{text-align:center;font-size:10px;color:var(--muted);margin-bottom:14px}
+.upi-id{text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;margin-bottom:4px}
+.upi-sub{text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px}
+.divider{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin:14px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line)}
+/* intent buttons */
+.intent-btn{display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;border-radius:10px;border:1.5px solid;cursor:pointer;font-family:'Inter',sans-serif;transition:all .14s;text-align:left;margin-bottom:8px;background:var(--white)}
+.intent-btn:last-child{margin:0}
+.intent-btn:active{transform:scale(.97)}
+.intent-btn.paytm{border-color:#bfdbfe;background:#eff6ff}
+.intent-btn.phonepe{border-color:#e9d5ff;background:#faf5ff}
+.intent-btn.gpay{border-color:#bfdbfe;background:#eff6ff}
+.intent-btn.any{border-color:var(--line);background:var(--faint)}
+.iname{font-size:13px;font-weight:700;display:block;margin-bottom:2px}
+.isub{font-size:10px;color:var(--muted);display:block}
+.paytm .iname{color:#1d4ed8}
+.phonepe .iname{color:#7e22ce}
+.gpay .iname{color:#1d4ed8}
+.any .iname{color:var(--dark2)}
+.intent-status{display:none;border-radius:var(--rs);padding:10px 13px;font-size:12px;font-weight:500;margin:10px 0;line-height:1.5}
+/* i've paid */
+.btn-paid{width:100%;padding:13px;border-radius:var(--rs);background:var(--green-l);border:2px solid var(--green-b);color:var(--green);font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;margin-top:12px}
+.btn-paid:hover{background:var(--green);color:#fff}
+.utr-box{display:none;background:var(--faint);border:1.5px solid var(--line);border-radius:var(--r);padding:14px;margin-top:10px}
+.utr-inp{width:100%;padding:12px;font-size:22px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.08em;border:2px solid var(--line);border-radius:var(--rs);text-align:center;color:var(--dark);transition:border-color .15s}
+.utr-inp:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.utr-count{text-align:center;font-size:11px;color:var(--muted);margin:5px 0 10px}
+.vfy-result{display:none;border-radius:var(--rs);padding:10px;margin:8px 0;font-size:13px;font-weight:500;text-align:center}
+.vfy-ok{background:var(--green-l);border:1.5px solid var(--green-b);color:var(--green)}
+.vfy-fail{background:var(--red-l);border:1.5px solid var(--red-b);color:var(--red)}
+/* states */
+.state{display:none;border-radius:var(--r);padding:22px;text-align:center;margin-bottom:12px}
+.state.show{display:block;animation:up .3s ease}
+.s-ok{background:var(--green-l);border:1.5px solid var(--green-b)}
+.s-fail{background:var(--red-l);border:1.5px solid var(--red-b)}
+.s-icon{font-size:40px;margin-bottom:10px}
+.s-title{font-size:22px;font-weight:700;margin-bottom:6px}
+.s-ok .s-title{color:var(--green)}
+.s-fail .s-title{color:var(--red)}
+.s-sub{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.d-box{background:var(--white);border:1px solid var(--line);border-radius:var(--rs);padding:0 14px;margin-bottom:12px;text-align:left}
+.d-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+.d-row:last-child{border:none}
+.dk{color:var(--muted)}
+.dv{font-weight:600;font-family:'DM Mono',monospace;word-break:break-all;text-align:right;max-width:60%}
+/* orders / logs */
+.ord-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.ord-item:last-child{border:none}
+.ord-item:active{opacity:.7}
+.badge{display:inline-flex;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.b-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-b)}
+.b-pend{background:var(--gold-l);color:var(--gold);border:1px solid var(--gold-b)}
+.b-fail{background:var(--red-l);color:var(--red);border:1px solid var(--red-b)}
+.b-cancel{background:var(--faint);color:var(--muted);border:1px solid var(--line)}
+.log-row{display:grid;grid-template-columns:50px 42px 1fr auto;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-family:'DM Mono',monospace;font-size:11px}
+.log-row:last-child{border:none}
+.empty{padding:24px 0;text-align:center;color:var(--muted);font-size:13px}
+.pay-note{font-size:11px;color:var(--muted);text-align:center;line-height:1.8;margin-top:12px}
+.pay-footer{background:var(--faint);border-top:1px solid var(--line);padding:10px 16px;display:flex;justify-content:center;gap:16px;font-size:10px;color:var(--muted);font-weight:500}
+/* fullscreen QR */
+.qr-fs{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;animation:up .2s ease}
+.qr-fs-white{background:#fff;border-radius:16px;padding:14px}
+.qr-fs-white img{width:min(300px,82vw);height:min(300px,82vw);display:block;border-radius:8px}
+/* spinner */
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .5s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--dark);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="logo-badge">⚡</div>Castle Pay</div>
+  <div class="live">Live</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="goTab('create',this)">New Payment</button>
+  <button class="tab" id="tab-checkout" style="display:none" onclick="goTab('checkout',this)">Checkout</button>
+  <button class="tab" onclick="goTab('orders',this)">Orders</button>
+  <button class="tab" onclick="goTab('logs',this)">Logs</button>
+</div>
+
+<!-- CREATE -->
+<div id="sc-create" class="screen active">
+  <div class="card">
+    <div class="clabel">Payment Details</div>
+    <div class="field">
+      <label>Merchant</label>
+      <select id="f-merchant">
+        <option value="paytmOffline">PayTM Offline — paytm.s1h4uwq@pty</option>
+        <option value="phonePEOffline">PhonePE Offline — phonepe.merchant@ybl</option>
+        <option value="gpayOffline">GPay Offline — gpay.merchant@okicici</option>
+        <option value="paytmOnline">PayTM Online</option>
+        <option value="payU">PayU</option>
+        <option value="stripe">Stripe</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Amount (₹)</label>
+      <div class="amt-wrap">
+        <span class="amt-pre">₹</span>
+        <input id="f-amount" type="number" min="1" value="1">
+      </div>
+    </div>
+    <div class="field">
+      <label>Order ID</label>
+      <input id="f-orderid" value="ORD000001">
+    </div>
+    <button class="btn-primary" id="btn-go" onclick="createOrder()">
+      <span id="btn-lbl">Create Order &amp; Pay</span>
+    </button>
+  </div>
+
+  <div class="url-card" id="url-card" style="display:none">
+    <div class="clabel" style="margin:0 0 4px">Payment Link</div>
+    <div class="url-row">
+      <div class="url-txt" id="url-txt" onclick="goToCheckout()"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copyUrl()">Copy</button>
+    </div>
+    <div style="font-size:11px;color:var(--primary);margin-top:8px;cursor:pointer;font-weight:500" onclick="goToCheckout()">→ Tap to open checkout</div>
+  </div>
+
+  <div class="card" id="recent-card" style="display:none">
+    <div class="clabel">Recent</div>
+    <div id="recent-list"></div>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<div id="sc-checkout" class="screen">
+
+  <div class="state s-ok" id="st-ok">
+    <div class="s-icon">✅</div>
+    <div class="s-title">Payment Confirmed!</div>
+    <div class="s-sub" id="ok-sub"></div>
+    <div class="d-box" id="ok-details"></div>
+    <button class="btn-primary" onclick="newOrder()">+ New Payment</button>
+  </div>
+
+  <div class="state s-fail" id="st-fail">
+    <div class="s-icon">❌</div>
+    <div class="s-title" id="fail-title">Payment Not Completed</div>
+    <div class="s-sub" id="fail-sub">The payment was cancelled or failed</div>
+    <div class="d-box" id="fail-details"></div>
+    <button class="btn-primary" onclick="retryOrder()">↺ Try Again</button>
+    <button class="btn-outline" onclick="newOrder()">+ New Order</button>
+  </div>
+
+  <div class="pay-card" id="pay-card">
+    <div class="pay-head">
+      <div class="pay-verified">
+        <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#fff"/><path d="M2.5 5l1.8 1.8 3.2-3.5" stroke="#16a34a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Verified Merchant
+      </div>
+      <div class="pay-mname" id="co-mname"></div>
+      <div class="pay-albl">PAYING AMOUNT</div>
+      <div class="pay-amt"><sup>₹</sup><span id="co-amt">0</span></div>
+      <div class="timer-pill" id="co-timer">⏱ <span id="co-timer-val">5:00</span></div>
+    </div>
+
+    <div class="pay-body">
+      <!-- QR -->
+      <div class="qr-wrap" onclick="showFullQR()">
+        <img id="co-qr" src="" alt="UPI QR">
+      </div>
+      <div class="qr-hint">Tap to enlarge · Scan with PayTM / PhonePE / GPay</div>
+      <div class="upi-id" id="co-upiid"></div>
+      <div class="upi-sub">Or tap a button below to open the app directly</div>
+
+      <div class="divider">open app directly</div>
+
+      <!-- Intent buttons -->
+      <button class="intent-btn paytm" onclick="fireIntent('paytmmp')">
+        <span style="font-size:22px">🔷</span>
+        <div><span class="iname">Open PayTM</span><span class="isub">paytmmp:// · proprietary scheme · best for @pty VPAs</span></div>
+      </button>
+      <button class="intent-btn phonepe" onclick="fireIntent('phonepe')">
+        <span style="font-size:22px">🟣</span>
+        <div><span class="iname">Open PhonePE</span><span class="isub">phonepe:// · direct to PhonePE app</span></div>
+      </button>
+      <button class="intent-btn gpay" onclick="fireIntent('gpay')">
+        <span style="font-size:22px">🔵</span>
+        <div><span class="iname">Open Google Pay</span><span class="isub">tez:// · direct to GPay app</span></div>
+      </button>
+      <button class="intent-btn any" onclick="fireIntent('upi')">
+        <span style="font-size:20px">📱</span>
+        <div><span class="iname">Any UPI App</span><span class="isub">upi:// · generic · shows all installed UPI apps</span></div>
+      </button>
+
+      <div class="intent-status" id="intent-status"></div>
+
+      <!-- I've paid -->
+      <button class="btn-paid" id="btn-paid" onclick="showUTR()">✓ &nbsp;I've Paid — Verify Payment</button>
+
+      <div class="utr-box" id="utr-box">
+        <div class="clabel">Enter Your UTR / UPI Ref Number</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;padding:10px;background:var(--white);border-radius:var(--rs);border:1px solid var(--line)">
+          Open your UPI app → tap the payment → find<br>
+          <span style="font-family:'DM Mono',monospace;color:var(--primary);font-weight:600">"UPI Ref ID"</span> or <span style="font-family:'DM Mono',monospace;color:var(--primary);font-weight:600">"Transaction ID"</span><br>
+          It is a <strong>12-digit number</strong>
+        </div>
+        <input class="utr-inp" id="utr-inp" type="tel" maxlength="12" placeholder="123456789012"
+          oninput="this.value=this.value.replace(/\D/g,'');onUTR(this.value)">
+        <div class="utr-count" id="utr-count">0 / 12 digits</div>
+        <div class="vfy-result" id="vfy-res"></div>
+        <button class="btn-primary" id="btn-verify" onclick="verifyUTR()" disabled style="opacity:.5;cursor:not-allowed">Verify &amp; Confirm Payment</button>
+        <button class="btn-outline" onclick="hideUTR()">← Back</button>
+      </div>
+
+      <button onclick="cancelOrder()" style="width:100%;margin-top:10px;padding:9px;background:none;border:1.5px solid var(--line);border-radius:var(--rs);color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">Cancel / Payment Failed</button>
+
+      <div class="pay-note">Do not pay twice for the same order</div>
+    </div>
+    <div class="pay-footer"><span>🔒 256-bit SSL</span><span>BHIM UPI</span><span>Secure</span></div>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div id="sc-orders" class="screen">
+  <div class="card"><div class="clabel">All Orders</div><div id="orders-list"><div class="empty">No orders yet</div></div></div>
+</div>
+
+<!-- LOGS -->
+<div id="sc-logs" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:16px;font-weight:700">Logs</div>
+    <button onclick="clearLogs()" style="padding:5px 12px;font-size:11px;font-weight:500;background:none;border:1.5px solid var(--line);border-radius:6px;color:var(--muted);cursor:pointer">Clear</button>
+  </div>
+  <div class="card" style="padding:0 14px"><div id="logs-list"><div class="empty">No requests yet</div></div></div>
+  <div class="card" style="margin-top:0"><div class="clabel">API Endpoints</div><div id="api-list"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="qr-fullscreen"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────
+const M = {
+  paytmOffline:  { name:'Audiva Fm Private Limited', upi:'paytm.s1h4uwq@pty' },
+  phonePEOffline:{ name:'PhonePE Merchant',          upi:'phonepe.merchant@ybl' },
+  gpayOffline:   { name:'GPay Merchant',             upi:'gpay.merchant@okicici' },
+  paytmOnline:   { name:'PayTM Online',              upi:'paytm.online1@pty' },
+  payU:          { name:'PayU',                      upi:'payu.merchant@payu' },
+  stripe:        { name:'Stripe',                    upi:'stripe.intl@axis' },
+};
+
+const API = {
+  create: k => `/private/gateway/${k}/create.php`,
+  status: k => `/private/gateway/${k}/status.php`,
+  verify: k => `/private/gateway/${k}/verify.php`,
+};
+
+const orders = {};
+const logs   = [];
+let cur = null, timerInterval = null;
+const e = s => encodeURIComponent(s);
+
+// ─── JWT (demo only) ──────────────────────────────────────────
+function b64u(o){ return btoa(unescape(encodeURIComponent(typeof o==='string'?o:JSON.stringify(o)))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_'); }
+function jwtSign(p){ const h=b64u({alg:'HS256',typ:'JWT'}),pl=b64u(p),s=b64u('x'+Math.random().toString(36).slice(2)).slice(0,43); return h+'.'+pl+'.'+s; }
+
+// ─── CREATE ORDER ─────────────────────────────────────────────
+function createOrder() {
+  const mk  = document.getElementById('f-merchant').value;
+  const amt = document.getElementById('f-amount').value.trim();
+  const oid = document.getElementById('f-orderid').value.trim();
+
+  if (!amt || parseFloat(amt) <= 0) { toast('Enter a valid amount'); return; }
+  if (!oid)                          { toast('Enter an order ID');    return; }
+  if (orders[oid])                   { toast('Order ID already used — change it'); return; }
+
+  setBtn(true);
+  addLog('POST', API.create(mk), 'PENDING', oid);
+
+  // ── When your server is live, replace this block with a real fetch:
+  // fetch(API.create(mk), {method:'POST', headers:{'Content-Type':'application/json'},
+  //   body: JSON.stringify({amount: amt, order_id: oid})})
+  //   .then(r => r.json())
+  //   .then(d => {
+  //     if (d.status === 'SUCCESS') { finishCreate(mk, oid, amt, d.payment_url); }
+  //     else { toast(d.message || 'Failed'); setBtn(false); updateLog(API.create(mk), 'FAILED', oid); }
+  //   })
+  //   .catch(() => { toast('Server error'); setBtn(false); });
+
+  setTimeout(function() {
+    var iat = Math.floor(Date.now()/1000);
+    var exp = iat + 300;
+    var token = jwtSign({merchant:mk, order_id:oid, amount:amt, upi:M[mk].upi, iat:iat, exp:exp});
+    var purl  = location.origin + '/PG/' + mk + '/checkout.php?token=' + token;
+
+    orders[oid] = {
+      order_id: oid, amount: amt, merchant: mk,
+      status: 'PENDING', utr: '', payer_name: '',
+      created: new Date().toLocaleTimeString('en-IN',{hour12:false}),
+      exp: exp, payment_url: purl
+    };
+
+    updateLog(API.create(mk), 'SUCCESS', oid);
+    addLog('POLL', API.status(mk)+'?order_id='+oid, 'PENDING', oid);
+    setBtn(false);
+    autoInc();
+    cur = oid;
+
+    // Show URL card
+    document.getElementById('url-card').style.display = 'block';
+    document.getElementById('url-txt').textContent    = purl;
+    document.getElementById('url-txt').dataset.url    = purl;
+
+    renderRecent();
+
+    // Show checkout tab and switch to it
+    document.getElementById('tab-checkout').style.display = 'inline-block';
+    renderCheckout(oid);
+    goTab('checkout', document.getElementById('tab-checkout'));
+    toast('Order created · Choose how to pay');
+  }, 600);
+}
+
+function finishCreate(mk, oid, amt, purl) {
+  // called when real server responds
+  updateLog(API.create(mk), 'SUCCESS', oid);
+  setBtn(false);
+  autoInc();
+  cur = oid;
+  document.getElementById('url-card').style.display = 'block';
+  document.getElementById('url-txt').textContent    = purl;
+  document.getElementById('url-txt').dataset.url    = purl;
+  renderRecent();
+  document.getElementById('tab-checkout').style.display = 'inline-block';
+  renderCheckout(oid);
+  goTab('checkout', document.getElementById('tab-checkout'));
+  toast('Order created · Choose how to pay');
+}
+
+// ─── RENDER CHECKOUT ─────────────────────────────────────────
+function renderCheckout(oid) {
+  var o = orders[oid];
+  var m = M[o.merchant];
+
+  // Reset states
+  document.getElementById('st-ok').classList.remove('show');
+  document.getElementById('st-fail').classList.remove('show');
+  document.getElementById('pay-card').style.display = 'block';
+
+  // Fill header
+  document.getElementById('co-mname').textContent = m.name;
+  document.getElementById('co-amt').textContent   = parseFloat(o.amount).toFixed(2);
+  document.getElementById('co-upiid').textContent = m.upi;
+
+  // Reset UTR section
+  hideUTR();
+  document.getElementById('intent-status').style.display = 'none';
+
+  // Start countdown
+  startTimer(o.exp);
+
+  // Build URLs
+  var amt = parseFloat(o.amount).toFixed(2);
+  var pn  = m.name;
+  var pa  = m.upi;
+
+  // Store all intent URLs on the QR element as data attributes
+  var qr = document.getElementById('co-qr');
+  qr.dataset.paytmmp = 'paytmmp://pay?pa='+e(pa)+'&pn='+e(pn)+'&am='+amt+'&cu=INR&tn=Payment';
+  qr.dataset.phonepe = 'phonepe://pay?pa='+e(pa)+'&pn='+e(pn)+'&am='+amt+'&cu=INR&tn=Payment';
+  qr.dataset.gpay    = 'tez://upi/pay?pa='+e(pa)+'&pn='+e(pn)+'&am='+amt+'&cu=INR&tn=Payment';
+  qr.dataset.upi     = 'upi://pay?pa='+e(pa)+'&pn='+e(pn)+'&am='+amt+'&cu=INR&tn=Payment';
+  qr.dataset.amt     = amt;
+
+  // QR image
+  var qrData = 'upi://pay?pa='+e(pa)+'&pn='+e(pn)+'&am='+amt+'&cu=INR';
+  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+e(qrData)+'&bgcolor=ffffff&color=000000&margin=8&ecc=H';
+}
+
+// ─── FIRE INTENT ─────────────────────────────────────────────
+function fireIntent(scheme) {
+  var qr   = document.getElementById('co-qr');
+  var url  = qr.dataset[scheme];
+  var stel = document.getElementById('intent-status');
+
+  if (!url) { toast('Order not loaded — create an order first'); return; }
+
+  var names = { paytmmp:'PayTM', phonepe:'PhonePE', gpay:'Google Pay', upi:'UPI App' };
+
+  stel.style.display    = 'block';
+  stel.style.background = '#eff6ff';
+  stel.style.border     = '1.5px solid #bfdbfe';
+  stel.style.color      = '#1d4ed8';
+  stel.textContent      = '⏳ Opening ' + (names[scheme]||'app') + '… pay and come back here';
+
+  // Fire the deep link
+  window.location.href = url;
+
+  // When user returns from payment app → auto show UTR box
+  function onReturn() {
+    if (document.visibilityState === 'visible') {
+      document.removeEventListener('visibilitychange', onReturn);
+      stel.style.background = '#f0fdf4';
+      stel.style.border     = '1.5px solid #bbf7d0';
+      stel.style.color      = '#16a34a';
+      stel.textContent      = '✓ You are back — enter your UTR below to confirm payment';
+      setTimeout(showUTR, 500);
+    }
+  }
+  document.addEventListener('visibilitychange', onReturn);
+}
+
+// ─── FULL SCREEN QR ──────────────────────────────────────────
+function showFullQR() {
+  var qr  = document.getElementById('co-qr');
+  var amt = qr.dataset.amt;
+  var upi = document.getElementById('co-upiid').textContent;
+  if (!amt) return;
+
+  var bigUrl = qr.src.replace('size=280x280','size=400x400');
+
+  var el = document.createElement('div');
+  el.className = 'qr-fs';
+  el.id = 'qr-fs';
+  el.innerHTML =
+    '<div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:14px;letter-spacing:.05em;text-transform:uppercase">Open UPI app → Scan QR</div>'+
+    '<div class="qr-fs-white"><img src="'+bigUrl+'" alt="QR"></div>'+
+    '<div style="font-size:13px;font-weight:600;color:#fff;margin-top:14px">₹'+amt+'</div>'+
+    '<div style="font-family:DM Mono,monospace;font-size:12px;color:#a5b4fc;margin-top:4px">'+upi+'</div>'+
+    '<div style="font-size:11px;color:#64748b;margin-top:8px;line-height:1.7;text-align:center">PayTM · PhonePE · GPay · BHIM · Any UPI App<br>Amount fills automatically after scan</div>'+
+    '<button onclick="document.getElementById(\'qr-fs\').remove()" style="margin-top:18px;padding:9px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;font-family:Inter,sans-serif">✕ Close</button>';
+
+  var old = document.getElementById('qr-fs');
+  if (old) old.remove();
+  document.body.appendChild(el);
+
+  if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(function(){});
+}
+
+// ─── UTR VERIFY ──────────────────────────────────────────────
+function showUTR() {
+  document.getElementById('btn-paid').style.display = 'none';
+  document.getElementById('utr-box').style.display  = 'block';
+  setTimeout(function(){ document.getElementById('utr-inp').focus(); }, 100);
+}
+
+function hideUTR() {
+  document.getElementById('btn-paid').style.display = 'block';
+  document.getElementById('utr-box').style.display  = 'none';
+  document.getElementById('utr-inp').value          = '';
+  document.getElementById('utr-count').textContent  = '0 / 12 digits';
+  document.getElementById('vfy-res').style.display  = 'none';
+  setVerifyBtn(false);
+}
+
+function onUTR(v) {
+  var n   = v.length;
+  var cnt = document.getElementById('utr-count');
+  cnt.textContent = n + ' / 12 digits';
+  cnt.style.color = n===12 ? '#16a34a' : n>0 ? '#d97706' : '#64748b';
+  setVerifyBtn(n === 12);
+  document.getElementById('vfy-res').style.display = 'none';
+}
+
+function setVerifyBtn(on) {
+  var btn = document.getElementById('btn-verify');
+  btn.disabled = !on;
+  btn.style.opacity = on ? '1' : '.5';
+  btn.style.cursor  = on ? 'pointer' : 'not-allowed';
+}
+
+function verifyUTR() {
+  if (!cur || !orders[cur]) return;
+  var utr = document.getElementById('utr-inp').value.trim();
+  if (utr.length !== 12) { toast('Enter the full 12-digit UTR'); return; }
+
+  var btn = document.getElementById('btn-verify');
+  btn.innerHTML = '<span class="spin"></span>Verifying…';
+  setVerifyBtn(false);
+
+  // ── Real server: replace with fetch ──
+  // fetch(API.verify(orders[cur].merchant)+'?utr='+utr+'&order_id='+cur+'&amount='+orders[cur].amount)
+  //   .then(r=>r.json()).then(d=>{
+  //     btn.textContent='Verify & Confirm Payment';
+  //     if(d.status==='SUCCESS') confirmPay(utr);
+  //     else showVfyFail(d.message||'UTR not found — check and try again');
+  //   }).catch(()=>{ btn.textContent='Verify & Confirm Payment'; showVfyFail('Server error'); });
+
+  setTimeout(function() {
+    btn.textContent = 'Verify & Confirm Payment';
+    // Check UTR not reused
+    var dup = Object.values(orders).find(function(x){ return x.utr===utr && x.order_id!==cur; });
+    if (dup) { showVfyFail('UTR already used for order '+dup.order_id); setVerifyBtn(true); return; }
+    confirmPay(utr);
+  }, 1000);
+}
+
+function confirmPay(utr) {
+  var o = orders[cur];
+  o.status = 'SUCCESS'; o.utr = utr; o.payer_name = 'Verified';
+  o.settled = new Date().toLocaleTimeString('en-IN',{hour12:false});
+
+  var res = document.getElementById('vfy-res');
+  res.className = 'vfy-result vfy-ok';
+  res.innerHTML = '✓ ₹'+parseFloat(o.amount).toFixed(2)+' confirmed · UTR: '+utr;
+  res.style.display = 'block';
+
+  addLog('VERIFY', API.verify(o.merchant), 'SUCCESS', o.order_id);
+  renderRecent(); renderOrders();
+  setTimeout(function(){ showSuccess(cur); }, 700);
+}
+
+function showVfyFail(msg) {
+  var res = document.getElementById('vfy-res');
+  res.className = 'vfy-result vfy-fail';
+  res.innerHTML = '✗ ' + msg;
+  res.style.display = 'block';
+}
+
+// ─── SUCCESS / FAIL ───────────────────────────────────────────
+function showSuccess(oid) {
+  var o = orders[oid], m = M[o.merchant];
+  clearInterval(timerInterval);
+  document.getElementById('co-timer').style.display = 'none';
+  document.getElementById('pay-card').style.display = 'none';
+  document.getElementById('st-fail').classList.remove('show');
+  document.getElementById('st-ok').classList.add('show');
+  document.getElementById('ok-sub').textContent = '₹'+parseFloat(o.amount).toFixed(2)+' received via '+m.name;
+  document.getElementById('ok-details').innerHTML =
+    dRow('Order ID', o.order_id)+
+    dRow('Amount',   '₹'+parseFloat(o.amount).toFixed(2), '#16a34a')+
+    dRow('Status',   'SUCCESS ✓', '#16a34a')+
+    dRow('UTR',      o.utr||'—')+
+    dRow('UPI ID',   m.upi)+
+    dRow('Time',     o.settled||o.created);
+  renderOrders();
+}
+
+function showFail(oid) {
+  var o = orders[oid], m = M[o.merchant];
+  clearInterval(timerInterval);
+  document.getElementById('pay-card').style.display = 'none';
+  document.getElementById('st-ok').classList.remove('show');
+  document.getElementById('st-fail').classList.add('show');
+  document.getElementById('fail-title').textContent = o.status==='CANCELLED'?'Payment Cancelled':'Order Not Created';
+  document.getElementById('fail-sub').textContent   = o.status==='CANCELLED'?'You cancelled. No money was deducted.':(o.fail_reason||'Payment failed.');
+  document.getElementById('fail-details').innerHTML =
+    dRow('Order ID', o.order_id)+
+    dRow('Amount',   '₹'+parseFloat(o.amount).toFixed(2))+
+    dRow('Status',   o.status, '#dc2626')+
+    dRow('Time',     o.created);
+  renderOrders();
+}
+
+function dRow(k, v, color) {
+  return '<div class="d-row"><span class="dk">'+k+'</span><span class="dv"'+(color?' style="color:'+color+'"':'')+'>'+v+'</span></div>';
+}
+
+function cancelOrder() {
+  if (!cur || !orders[cur]) return;
+  orders[cur].status = 'CANCELLED';
+  clearInterval(timerInterval);
+  addLog('SYS', 'order/cancel', 'CANCEL', cur);
+  showFail(cur);
+}
+
+function retryOrder() {
+  if (!cur || !orders[cur]) return;
+  orders[cur].status = 'PENDING';
+  document.getElementById('st-fail').classList.remove('show');
+  document.getElementById('pay-card').style.display = 'block';
+  renderCheckout(cur);
+}
+
+function newOrder() {
+  clearInterval(timerInterval);
+  cur = null;
+  document.getElementById('st-ok').classList.remove('show');
+  document.getElementById('st-fail').classList.remove('show');
+  document.getElementById('pay-card').style.display = 'block';
+  document.getElementById('url-card').style.display = 'none';
+  goTab('create', document.querySelectorAll('.tab')[0]);
+  setTimeout(function(){ document.getElementById('f-amount').focus(); }, 100);
+}
+
+// ─── TIMER ────────────────────────────────────────────────────
+function startTimer(exp) {
+  clearInterval(timerInterval);
+  var el  = document.getElementById('co-timer');
+  var val = document.getElementById('co-timer-val');
+  el.style.display = 'inline-flex';
+  function tick() {
+    var rem = exp - Math.floor(Date.now()/1000);
+    if (rem <= 0) { clearInterval(timerInterval); val.textContent='Expired'; el.style.background='rgba(220,38,38,.3)'; return; }
+    val.textContent = Math.floor(rem/60)+':'+(rem%60).toString().padStart(2,'0');
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+// ─── URL CARD ─────────────────────────────────────────────────
+function goToCheckout() { if (cur) goTab('checkout', document.getElementById('tab-checkout')); }
+
+function copyUrl() {
+  var url = document.getElementById('url-txt').dataset.url || '';
+  navigator.clipboard.writeText(url).then(function(){
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!'; btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent='Copy'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+// ─── LOGS ─────────────────────────────────────────────────────
+function addLog(method, path, status, oid) {
+  logs.unshift({method:method, path:path.split('?')[0], status:status, oid:oid, time:new Date().toLocaleTimeString('en-IN',{hour12:false})});
+  renderLogs();
+}
+function updateLog(path, status, oid) {
+  var e2 = logs.find(function(l){ return l.path===path.split('?')[0] && l.oid===oid && l.status==='PENDING'; });
+  if (e2) e2.status = status;
+  renderLogs();
+}
+function renderLogs() {
+  var el = document.getElementById('logs-list');
+  if (!logs.length) { el.innerHTML = '<div class="empty">No requests yet</div>'; return; }
+  var mc = {POST:'#6366f1',GET:'#d97706',POLL:'#d97706',VERIFY:'#16a34a',SYS:'#64748b'};
+  var bc = {SUCCESS:'b-ok',PENDING:'b-pend',FAILED:'b-fail',CANCEL:'b-cancel'};
+  el.innerHTML = logs.slice(0,40).map(function(l){
+    return '<div class="log-row">'+
+      '<span style="color:#64748b">'+l.time+'</span>'+
+      '<span style="color:'+(mc[l.method]||'#64748b')+';font-weight:600">'+l.method+'</span>'+
+      '<span style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+l.path+'</span>'+
+      '<span class="badge '+(bc[l.status]||'b-cancel')+'">'+l.status+'</span>'+
+      '</div>';
+  }).join('');
+}
+function clearLogs() { logs.length=0; renderLogs(); }
+
+// ─── ORDERS ───────────────────────────────────────────────────
+function renderOrders() {
+  var keys = Object.keys(orders);
+  var el   = document.getElementById('orders-list');
+  if (!keys.length) { el.innerHTML='<div class="empty">No orders yet</div>'; return; }
+  el.innerHTML = keys.slice().reverse().map(function(k){
+    var o=orders[k], bc=o.status==='SUCCESS'?'b-ok':o.status==='PENDING'?'b-pend':o.status==='CANCELLED'?'b-cancel':'b-fail';
+    return '<div class="ord-item" onclick="viewOrder(\''+k+'\')">'+
+      '<div>'+
+        '<div style="font-weight:700">₹'+parseFloat(o.amount).toFixed(2)+'</div>'+
+        '<div style="font-size:11px;font-family:DM Mono,monospace;color:#64748b;margin-top:2px">'+o.order_id+' · '+M[o.merchant].name+'</div>'+
+        '<div style="font-size:11px;color:#94a3b8;margin-top:1px">'+o.created+(o.utr?' · '+o.utr:'')+'</div>'+
+      '</div>'+
+      '<span class="badge '+bc+'">'+o.status+'</span>'+
+      '</div>';
+  }).join('');
+}
+
+function renderRecent() {
+  var keys = Object.keys(orders);
+  var card = document.getElementById('recent-card');
+  if (!keys.length) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  document.getElementById('recent-list').innerHTML = keys.slice().reverse().slice(0,4).map(function(k){
+    var o=orders[k], bc=o.status==='SUCCESS'?'b-ok':o.status==='PENDING'?'b-pend':o.status==='CANCELLED'?'b-cancel':'b-fail';
+    return '<div class="ord-item" onclick="viewOrder(\''+k+'\')">'+
+      '<div><div style="font-weight:700">₹'+parseFloat(o.amount).toFixed(2)+'</div><div style="font-size:11px;color:#64748b;font-family:DM Mono,monospace">'+o.order_id+'</div></div>'+
+      '<span class="badge '+bc+'">'+o.status+'</span>'+
+      '</div>';
+  }).join('');
+}
+
+function viewOrder(oid) {
+  cur = oid;
+  document.getElementById('tab-checkout').style.display = 'inline-block';
+  var o = orders[oid];
+  if (o.status==='SUCCESS') { document.getElementById('pay-card').style.display='none'; showSuccess(oid); }
+  else if (o.status==='CANCELLED'||o.status==='FAILED') { document.getElementById('pay-card').style.display='none'; showFail(oid); }
+  else { document.getElementById('st-ok').classList.remove('show'); document.getElementById('st-fail').classList.remove('show'); document.getElementById('pay-card').style.display='block'; renderCheckout(oid); }
+  goTab('checkout', document.getElementById('tab-checkout'));
+}
+
+// ─── API URL LIST ─────────────────────────────────────────────
+function renderAPIList() {
+  document.getElementById('api-list').innerHTML = Object.entries(M).map(function(kv){
+    var k=kv[0], m=kv[1];
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+
+      '<div style="font-size:12px;font-weight:600;margin-bottom:4px">'+m.name+'</div>'+
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:#64748b;line-height:2">'+
+        'POST '+API.create(k)+'<br>'+
+        'GET&nbsp; '+API.status(k)+
+      '</div></div>';
+  }).join('')+'<div style="height:4px"></div>';
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────
+function goTab(name, el) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('sc-'+name).classList.add('active');
+  el.classList.add('active');
+  if (name==='orders') renderOrders();
+  if (name==='logs')   { renderLogs(); renderAPIList(); }
+}
+
+function setBtn(loading) {
+  var btn = document.getElementById('btn-go');
+  var lbl = document.getElementById('btn-lbl');
+  btn.disabled = loading;
+  lbl.innerHTML = loading ? '<span class="spin"></span>Creating…' : 'Create Order &amp; Pay';
+}
+
+function autoInc() {
+  var el = document.getElementById('f-orderid'), v = el.value;
+  var m  = v.match(/^(.*?)(\d+)$/);
+  if (m) el.value = m[1] + String(parseInt(m[2])+1).padStart(m[2].length, '0');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+// Enter key on inputs
+['f-amount','f-orderid'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown', function(ev){ if(ev.key==='Enter') createOrder(); });
+});
+
+// Demo helpers (browser console)
+window.simulatePay = function() {
+  if (!cur||!orders[cur]) { toast('No active order'); return; }
+  confirmPay(String(Math.floor(1e11+Math.random()*9e11)));
+};
+
+renderAPIList();
+</script>
+</body>
+</html>
